@@ -74,6 +74,89 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+
+/* ═══════════════════════════════════════
+   USER-MODE: ẩn toàn bộ editor UI, chỉ hiển thị dashboard
+═══════════════════════════════════════ */
+body.user-mode {
+  grid-template-rows: 48px 1fr !important;
+  grid-template-columns: 0px 1fr 0px !important;
+  grid-template-areas:
+    "topbar  topbar  topbar"
+    "sidebar canvas  props" !important;
+}
+body.user-mode .sidebar          { display: none !important; }
+body.user-mode .props-panel      { display: none !important; }
+body.user-mode .statusbar        { display: none !important; }
+body.user-mode .topbar           {
+  grid-template-columns: auto 1fr auto !important;
+  padding: 0 18px !important;
+}
+/* Ẩn tất cả nút editor trong topbar - chỉ giữ clock + user menu */
+body.user-mode #btnUndo,
+body.user-mode .btn:not(#_userModeKeep),
+body.user-mode .unsaved-dot,
+body.user-mode .unsaved-label,
+body.user-mode .topbar-sep,
+body.user-mode .topbar-page      { display: none !important; }
+/* Ẩn canvas editor chrome: header, quicknav, ux panel */
+body.user-mode .canvas-header    { display: none !important; }
+body.user-mode .canvas-quick-nav { display: none !important; }
+body.user-mode #uxAuditPanel     { display: none !important; }
+/* Canvas area chiếm toàn bộ không gian */
+body.user-mode .canvas-area {
+  grid-column: 1 / -1 !important;
+  padding: 0 !important;
+  overflow-y: auto !important;
+}
+body.user-mode .canvas-area::before { display: none !important; }
+/* Canvas & overlay full width */
+body.user-mode #canvas,
+body.user-mode #tbPageOverlay {
+  padding: 16px 24px !important;
+}
+/* Section cards: ẩn drag handle, card actions, card-act-btn */
+body.user-mode .card-drag,
+body.user-mode .card-actions,
+body.user-mode .ic-toolbar,
+body.user-mode .ic-tbtn           { display: none !important; }
+/* Section không clickable để chọn */
+body.user-mode .section-card      { cursor: default !important; }
+body.user-mode .section-card:hover { border-color: var(--border) !important; box-shadow: none !important; }
+/* Ẩn add-card button */
+body.user-mode .ic-add-card        { display: none !important; }
+/* Topbar user-mode: chỉ hiển thị logo + title + user menu */
+body.user-mode .brand-sub          { display: none !important; }
+body.user-mode .topbar {
+  background: var(--bg-surface) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+/* User mode topbar brand-sub show dashboard text */
+body.user-mode .brand::after {
+  content: 'EVNHANOI – Dashboard';
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+  margin-left: 10px;
+}
+
+/* User-mode: show clean dashboard title in topbar */
+body.user-mode .topbar-page { display: flex !important; font-size: 14px !important; }
+body.user-mode .topbar-page strong { font-size: 14px !important; }
+body.user-mode .brand::after { display: none; }
+/* Remove grid background dots in user mode */
+body.user-mode .canvas-area::before { display: none !important; }
+/* Chip sections in user mode: pointer-events normal for data interaction */
+body.user-mode .device-chip { cursor: pointer !important; }
+body.user-mode .quick-nav-item { cursor: pointer !important; }
+/* Section cards in user mode: no hover border highlight */
+body.user-mode .section-card.is-selected {
+  border-color: var(--border) !important;
+  box-shadow: none !important;
+}
+
+
 /* ═══════════════════════════════════════
    TOPBAR
 ═══════════════════════════════════════ */
@@ -1776,10 +1859,40 @@ body { font-size: var(--fs-base); }
 .hm-export-btn { padding:5px 10px; border-radius:6px; cursor:pointer; font-size:10px; flex-shrink:0; border:1px solid rgba(0,200,255,0.3); background:rgba(0,200,255,0.06); color:var(--accent); }
 .hm-export-btn:hover { background:rgba(0,200,255,0.14); }
 .hm-sub-bar { display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-family:var(--font-mono); font-size:9px; color:var(--text-muted); margin-bottom:6px; }
-.hm-detail-panel { position:fixed; right:0; top:0; bottom:0; width:290px; z-index:800; background:var(--bg-surface); border-left:1px solid rgba(255,255,255,0.12); box-shadow:-8px 0 32px rgba(0,0,0,.5); overflow-y:auto; transform:translateX(100%); transition:transform .2s; }
-.hm-detail-panel.open { transform:translateX(0); }
-.hm-detail-hd { padding:14px 16px 10px; font-size:12px; font-weight:700; color:var(--accent); border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; }
-.hm-detail-close { cursor:pointer; color:var(--text-muted); padding:2px 6px; border-radius:4px; }
+.hm-detail-panel {
+  position: fixed;
+  right: 0; top: 0; bottom: 0;
+  width: 360px;
+  min-width: 260px;
+  max-width: 60vw;
+  z-index: 9200;
+  background: var(--bg-surface);
+  border-left: 1px solid rgba(255,255,255,0.15);
+  box-shadow: -10px 0 40px rgba(0,0,0,.65);
+  transform: translateX(100%);
+  transition: transform .22s cubic-bezier(0.4,0,0.2,1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.hm-detail-panel.open { transform: translateX(0); }
+/* Drag resize handle on left edge */
+.hm-detail-panel .hm-resize-grip {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 10;
+  background: transparent;
+  transition: background .15s;
+}
+.hm-detail-panel .hm-resize-grip:hover,
+.hm-detail-panel .hm-resize-grip.dragging {
+  background: rgba(0,200,255,0.35);
+}
+
+.hm-detail-hd { padding:12px 16px 10px; font-size:13px; font-weight:700; color:var(--accent); border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; flex-shrink:0; user-select:none; cursor:move; }
+.hm-detail-close { cursor:pointer; color:var(--text-muted); padding:4px 8px; border-radius:4px; font-size:14px; flex-shrink:0; } .hm-detail-close:hover { color:var(--text-primary); background:rgba(255,255,255,.08); }
 .hm-detail-item { padding:5px 0; font-size:10px; border-bottom:1px solid rgba(255,255,255,0.05); color:var(--text-secondary); font-family:var(--font-mono); }
 .chart-ph {
   background: var(--bg-elevated);
@@ -2881,7 +2994,7 @@ body.preview-mode .section-card {
     </div>
   </div>
   <div class="topbar-sep"></div>
-  <span class="topbar-page">Dashboard <strong>Quản Lý Thiết Bị</strong></span>
+  <span class="topbar-page" id="topbarPageTitle">Dashboard <strong>Quản Lý Thiết Bị</strong></span>
   <div id="unsavedDot" class="unsaved-dot" title="Có thay đổi chưa lưu"></div>
   <span class="unsaved-label" id="unsavedLabel">Chưa lưu</span>
   <div class="topbar-actions">
@@ -5965,14 +6078,17 @@ function lytCellClick(td) {
   const list = (td.dataset.ngan||'').split('|').filter(Boolean);
   let p = document.getElementById('hm-detail-panel');
   if (!p) { p = document.createElement('div'); p.id='hm-detail-panel'; p.className='hm-detail-panel'; document.body.appendChild(p); }
-  p.innerHTML = `<div class="hm-detail-hd"><span>📍 ${tram} · ${lbl}</span>
-    <span class="hm-detail-close" onclick="this.closest('.hm-detail-panel').classList.remove('open')">✕</span></div>
-    <div style="padding:10px 16px">
-      <div style="font-size:9px;color:var(--text-muted);margin-bottom:8px;font-family:var(--font-mono)">
+  p.innerHTML = `<div class="hm-resize-grip"></div><div class="hm-detail-hd"><span>📍 ${tram} · ${lbl}</span>
+    <span class="hm-detail-close" onclick="this.closest('.hm-detail-panel').classList.remove('open');let bd=document.getElementById('hm-detail-backdrop');if(bd)bd.style.display='none'">✕</span></div>
+    <div style="padding:8px 16px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.07)">
+      <div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;font-family:var(--font-mono)">
         ${list.length} ngăn · TB: <b style="color:var(--text-primary)">${ttb.toLocaleString('vi-VN')}</b></div>
-      ${list.map((n,i)=>`<div class="hm-detail-item">${i+1}. ${n}</div>`).join('')}
+    </div>
+    <div style="overflow-y:auto;flex:1;min-height:0;padding:8px 0;overscroll-behavior:contain">
+      ${list.map((n,i)=>`<div class="hm-detail-item" style="padding:5px 16px">${i+1}. ${n}</div>`).join('')}
     </div>`;
   p.classList.add('open');
+  _hmOpenPanel(p);
 }
 
 // ══════════════════════════════════════════════════════
@@ -6965,7 +7081,8 @@ function _lytShowDetailPanel(title, color, totalLine, items, mbaSection) {
   }).join('');
 
   p.innerHTML = `
-    <div class="hm-detail-hd" style="border-left:3px solid ${color||'var(--accent)'}">
+    <div class="hm-resize-grip" id="hm-resize-grip"></div>
+    <div class="hm-detail-hd" style="border-left:3px solid ${color||'var(--accent)'}" id="hm-detail-hd-drag">
       <span style="color:${color||'var(--accent)'}">${title}</span>
       <span class="hm-detail-close"
         onclick="this.closest('.hm-detail-panel').classList.remove('open');let b=document.getElementById('hm-detail-backdrop');if(b)b.style.display='none'">✕</span>
@@ -6976,19 +7093,147 @@ function _lytShowDetailPanel(title, color, totalLine, items, mbaSection) {
         style="width:100%;box-sizing:border-box;padding:5px 9px;border-radius:6px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:var(--text-primary);font-size:10px;outline:none"
         oninput="_lytDetailSearchFn(this.value)"/>
     </div>
-    <div id="hm-detail-body" style="overflow-y:auto;flex:1;min-height:0;overscroll-behavior:contain">${bodyHtml}</div>`;
-
+    <div id="hm-detail-body" style="overflow-y:auto;flex:1;min-height:0;overscroll-behavior:contain;-webkit-overflow-scrolling:touch">${bodyHtml}</div>`;
   p.classList.add('open');
+  _hmOpenPanel(p);
   let bd = document.getElementById('hm-detail-backdrop');
   if (!bd) {
     bd = document.createElement('div');
     bd.id = 'hm-detail-backdrop';
-    bd.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.4);display:none';
+    bd.style.cssText = 'position:fixed;inset:0;z-index:9190;background:rgba(0,0,0,.35);display:none;backdrop-filter:blur(1px)';
     bd.onclick = () => { p.classList.remove('open'); bd.style.display='none'; };
     document.body.appendChild(bd);
   }
   bd.style.display = 'block';
   setTimeout(()=>{ const s=document.getElementById('hm-detail-search'); if(s)s.focus(); }, 80);
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  DETAIL PANEL: DRAG TO MOVE + RESIZE + KEYBOARD CLOSE
+// ═══════════════════════════════════════════════════════════════
+function _hmPanelInitDrag(panel) {
+  if (!panel || panel._dragInited) return;
+  panel._dragInited = true;
+
+  // ── Ensure panel is display:flex flex-direction:column ──
+  panel.style.display = 'flex';
+  panel.style.flexDirection = 'column';
+  panel.style.overflow = 'hidden';
+
+  // ── Add resize grip if not present ──
+  if (!panel.querySelector('.hm-resize-grip')) {
+    const grip = document.createElement('div');
+    grip.className = 'hm-resize-grip';
+    panel.insertBefore(grip, panel.firstChild);
+  }
+
+  // ── Ensure all flex:1 children are scrollable ──
+  panel.querySelectorAll('[style*="flex:1"]').forEach(el => {
+    el.style.overflowY = 'auto';
+    el.style.minHeight = '0';
+    el.style.overscrollBehavior = 'contain';
+    el.style.webkitOverflowScrolling = 'touch';
+  });
+
+  // ── LEFT EDGE DRAG = RESIZE WIDTH ──
+  const grip2 = panel.querySelector('.hm-resize-grip');
+  if (grip2) {
+    let startX, startW;
+    grip2.addEventListener('mousedown', e => {
+      e.preventDefault();
+      startX = e.clientX;
+      startW = panel.offsetWidth;
+      grip2.classList.add('dragging');
+      const onMove = ev => {
+        const newW = Math.max(260, Math.min(window.innerWidth * 0.7, startW + (startX - ev.clientX)));
+        panel.style.width = newW + 'px';
+      };
+      const onUp = () => {
+        grip2.classList.remove('dragging');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+    // Touch resize
+    grip2.addEventListener('touchstart', e => {
+      const t0 = e.touches[0]; startX = t0.clientX; startW = panel.offsetWidth;
+    }, { passive: true });
+    grip2.addEventListener('touchmove', e => {
+      const t0 = e.touches[0];
+      const newW = Math.max(260, Math.min(window.innerWidth * 0.7, startW + (startX - t0.clientX)));
+      panel.style.width = newW + 'px';
+    }, { passive: true });
+  }
+
+  // ── HEADER DRAG = VERTICAL POSITION ──
+  const hd = panel.querySelector('.hm-detail-hd');
+  if (hd) {
+    let startY, startTop;
+    hd.addEventListener('mousedown', e => {
+      if (e.target.classList.contains('hm-detail-close')) return;
+      e.preventDefault();
+      startY = e.clientY;
+      startTop = parseInt(panel.style.top || '0', 10);
+      const onMove = ev => {
+        const newTop = Math.max(0, Math.min(window.innerHeight - 80, startTop + ev.clientY - startY));
+        panel.style.top = newTop + 'px';
+        panel.style.bottom = 'auto';
+        panel.style.height = (window.innerHeight - newTop) + 'px';
+      };
+      const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
+
+  // ── KEYBOARD CLOSE (Escape) ──
+  if (!window._hmEscBound) {
+    window._hmEscBound = true;
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        const p = document.getElementById('hm-detail-panel');
+        if (p && p.classList.contains('open')) {
+          p.classList.remove('open');
+          p.style.top = ''; p.style.bottom = ''; p.style.height = '';
+          const bd = document.getElementById('hm-detail-backdrop');
+          if (bd) bd.style.display = 'none';
+        }
+      }
+    });
+  }
+}
+
+// Universal panel open — call after setting innerHTML + classList.add('open')
+function _hmOpenPanel(p, showBackdrop) {
+  _hmPanelInitDrag(p);
+  // Reset panel position
+  p.style.top = ''; p.style.bottom = '0'; p.style.height = '';
+  if (showBackdrop !== false) {
+    let bd = document.getElementById('hm-detail-backdrop');
+    if (!bd) {
+      bd = document.createElement('div');
+      bd.id = 'hm-detail-backdrop';
+      bd.style.cssText = 'position:fixed;inset:0;z-index:9190;background:rgba(0,0,0,.35);display:none;backdrop-filter:blur(1px)';
+      bd.onclick = () => {
+        p.classList.remove('open');
+        p.style.top=''; p.style.bottom='0'; p.style.height='';
+        bd.style.display='none';
+      };
+      document.body.appendChild(bd);
+    }
+    bd.style.display = 'block';
+  }
+  // Focus search if present
+  setTimeout(() => {
+    const si = p.querySelector('input[type=text]');
+    if (si) si.focus();
+  }, 250);
 }
 
 function _lytDetailSearchFn(val) {
@@ -7599,18 +7844,19 @@ function lytStatsCardClick(label, color) {
   }
 
   p.innerHTML = `
+    <div class="hm-resize-grip"></div>
     <div class="hm-detail-hd" style="border-left:3px solid ${color||'var(--accent)'}">
       <span style="color:${color||'var(--accent)'}">${title}</span>
       <span class="hm-detail-close"
-        onclick="this.closest('.hm-detail-panel').classList.remove('open')">✕</span>
+        onclick="this.closest('.hm-detail-panel').classList.remove('open');let bd=document.getElementById('hm-detail-backdrop');if(bd)bd.style.display='none'">✕</span>
     </div>
-    <div style="padding:8px 16px;font-size:9px;color:var(--text-muted);
-      font-family:var(--font-mono);border-bottom:1px solid rgba(255,255,255,0.06)">
+    <div style="padding:8px 16px;font-size:9px;color:var(--text-muted);font-family:var(--font-mono);border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0">
       ${totalLine}
     </div>
-    <div style="overflow-y:auto;flex:1">${bodyHtml}</div>`;
+    <div style="overflow-y:auto;flex:1;min-height:0;overscroll-behavior:contain">${bodyHtml}</div>`;
 
   p.classList.add('open');
+  _hmOpenPanel(p);
 }
 
 function lytNormalizeNganLoai(v) {
@@ -8524,13 +8770,15 @@ function _tbStatCardClick(key) {
   let p=document.getElementById('hm-detail-panel');
   if(!p){p=document.createElement('div');p.id='hm-detail-panel';p.className='hm-detail-panel';document.body.appendChild(p);}
   p.innerHTML=`
+    <div class="hm-resize-grip"></div>
     <div class="hm-detail-hd" style="border-left:3px solid ${col}">
       <span style="color:${col}">${title}</span>
-      <span class="hm-detail-close" onclick="this.closest('.hm-detail-panel').classList.remove('open')">✕</span>
+      <span class="hm-detail-close" onclick="this.closest('.hm-detail-panel').classList.remove('open');let bd=document.getElementById('hm-detail-backdrop');if(bd)bd.style.display='none'">✕</span>
     </div>
-    <div style="padding:8px 16px;font-size:9px;color:var(--text-muted);font-family:var(--font-mono);border-bottom:1px solid rgba(255,255,255,.06)">${totalLine}</div>
-    <div style="overflow-y:auto;flex:1">${bodyHtml||'<div style=\'padding:24px;text-align:center;color:var(--text-muted)\'>Không có dữ liệu</div>'}</div>`;
+    <div style="padding:8px 16px;font-size:9px;color:var(--text-muted);font-family:var(--font-mono);border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0">${totalLine}</div>
+    <div style="overflow-y:auto;flex:1;min-height:0;overscroll-behavior:contain">${bodyHtml||'<div style=\'padding:24px;text-align:center;color:var(--text-muted)\'>Không có dữ liệu</div>'}</div>`;
   p.classList.add('open');
+  _hmOpenPanel(p);
 }
 
 // ── TABLE ─────────────────────────────────────────────────────
@@ -9281,13 +9529,15 @@ function _tnShowStatPanel(lvl) {
   let p=document.getElementById('hm-detail-panel');
   if(!p){p=document.createElement('div');p.id='hm-detail-panel';p.className='hm-detail-panel';document.body.appendChild(p);}
   p.innerHTML=`
+    <div class="hm-resize-grip"></div>
     <div class="hm-detail-hd" style="border-left:3px solid ${conf.color}">
       <span style="color:${conf.color}">${conf.title}</span>
-      <span class="hm-detail-close" onclick="this.closest('.hm-detail-panel').classList.remove('open')">✕</span>
+      <span class="hm-detail-close" onclick="this.closest('.hm-detail-panel').classList.remove('open');let bd=document.getElementById('hm-detail-backdrop');if(bd)bd.style.display='none'">✕</span>
     </div>
-    <div style="padding:8px 16px;font-size:9px;color:var(--text-muted);font-family:var(--font-mono);border-bottom:1px solid rgba(255,255,255,.06)">${fmt(srcRows.length)} bản ghi · ${tramKeys.length} trạm</div>
-    <div style="overflow-y:auto;flex:1">${bodyHtml||'<div style="padding:24px;text-align:center;color:var(--text-muted)">Không có dữ liệu</div>'}</div>`;
+    <div style="padding:8px 16px;font-size:9px;color:var(--text-muted);font-family:var(--font-mono);border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0">${fmt(srcRows.length)} bản ghi · ${tramKeys.length} trạm</div>
+    <div style="overflow-y:auto;flex:1;min-height:0;overscroll-behavior:contain">${bodyHtml||'<div style="padding:24px;text-align:center;color:var(--text-muted)">Không có dữ liệu</div>'}</div>`;
   p.classList.add('open');
+  _hmOpenPanel(p);
 }
 
 function _tnStats() {
@@ -10140,13 +10390,15 @@ function _bcStatClick(key, data) {
   let p=document.getElementById('hm-detail-panel');
   if(!p){p=document.createElement('div');p.id='hm-detail-panel';p.className='hm-detail-panel';document.body.appendChild(p);}
   p.innerHTML=`
+    <div class="hm-resize-grip"></div>
     <div class="hm-detail-hd" style="border-left:3px solid ${col}">
       <span style="color:${col}">${title}</span>
-      <span class="hm-detail-close" onclick="this.closest('.hm-detail-panel').classList.remove('open')">✕</span>
+      <span class="hm-detail-close" onclick="this.closest('.hm-detail-panel').classList.remove('open');let bd=document.getElementById('hm-detail-backdrop');if(bd)bd.style.display='none'">✕</span>
     </div>
-    <div style="padding:8px 16px;font-size:9px;color:var(--text-muted);font-family:var(--font-mono);border-bottom:1px solid rgba(255,255,255,.06)">${totalLine}</div>
-    <div style="overflow-y:auto;flex:1">${bodyHtml||'<div style=\"padding:24px;text-align:center;color:var(--text-muted)\">Không có dữ liệu</div>'}</div>`;
+    <div style="padding:8px 16px;font-size:9px;color:var(--text-muted);font-family:var(--font-mono);border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0">${totalLine}</div>
+    <div style="overflow-y:auto;flex:1;min-height:0;overscroll-behavior:contain">${bodyHtml||'<div style=\"padding:24px;text-align:center;color:var(--text-muted)\">Không có dữ liệu</div>'}</div>`;
   p.classList.add('open');
+  _hmOpenPanel(p);
 }
 // ── MAIN RENDER BÁOCÁO ────────────────────────────────────────
 function bcRenderPage(conf, title) {
@@ -10308,6 +10560,7 @@ function _authLogin() {
   _authAddLog('LOGIN', `Đăng nhập thành công từ ${navigator.userAgent.slice(0,50)}`, found.username);
   document.getElementById('authOverlay').style.display = 'none';
   _authInitUserMenu();
+  _authApplyRoleUI(found.role);
   showChangeNotif('success', 'Đăng nhập thành công', `Xin chào ${found.name}!`);
 }
 
@@ -10322,6 +10575,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (sess) {
     document.getElementById('authOverlay').style.display = 'none';
     _authInitUserMenu();
+    _authApplyRoleUI(sess.role);
   }
 });
 
@@ -10330,11 +10584,18 @@ function _authLogout() {
   const sess = _authCurrentUser();
   if (sess) _authAddLog('LOGOUT', 'Đã đăng xuất', sess.username);
   sessionStorage.removeItem(_LOGIN_KEY);
+  // Reset UI back to default before showing login
+  document.body.classList.remove('user-mode');
+  const ca = document.getElementById('canvasArea');
+  if (ca) { ca.style.gridColumn = ''; ca.style.padding = ''; }
   document.getElementById('authOverlay').style.display = 'flex';
   document.getElementById('authUser').value='';
   document.getElementById('authPass').value='';
   const drop = document.getElementById('userMenuDropdown');
   if (drop) drop.classList.remove('open');
+  // Remove user menu
+  const wrap = document.getElementById('_userMenuWrap');
+  if (wrap) wrap.remove();
 }
 
 // ── USER MENU in topbar ──
@@ -10604,6 +10865,49 @@ function _adminEditUser(idx) {
   _authAddLog('EDIT_USER', `Đổi vai trò ${u.username}: ${newRole}`);
   showChangeNotif('success','Cập nhật vai trò',`${u.name} → ${newRole.toUpperCase()}`);
   _adminTab('users', document.querySelector('.admin-tab.active'));
+}
+
+
+// ── APPLY ROLE-BASED UI ──
+// USER: chỉ xem dashboard, không thấy editor chrome
+// ADMIN: toàn bộ layout editor như bình thường
+function _authApplyRoleUI(role) {
+  const body = document.body;
+  if (role === 'user') {
+    body.classList.add('user-mode');
+    // Disable drag-and-drop on section cards for users
+    document.addEventListener('dragstart', e => {
+      if (body.classList.contains('user-mode')) e.preventDefault();
+    }, true);
+    // Disable section card click-to-select for users
+    document.addEventListener('click', e => {
+      if (!body.classList.contains('user-mode')) return;
+      const sc = e.target.closest('.section-card');
+      if (sc) { e.stopImmediatePropagation(); }
+    }, true);
+    // Disable keyboard shortcuts for users
+    document.addEventListener('keydown', e => {
+      if (!body.classList.contains('user-mode')) return;
+      if ((e.ctrlKey||e.metaKey) && ['s','z','y'].includes(e.key.toLowerCase())) e.preventDefault();
+    }, true);
+    // Hide UX score badge and any canvas-head-actions
+    const uxBadge = document.getElementById('uxScoreBadge');
+    if (uxBadge) uxBadge.style.display = 'none';
+    // Make sure canvas area fills the whole screen
+    const ca = document.getElementById('canvasArea');
+    if (ca) {
+      ca.style.gridColumn = '1 / -1';
+      ca.style.padding = '0';
+    }
+    // Show topbar with just brand + user info
+    const tb = document.querySelector('.topbar');
+    if (tb) tb.setAttribute('data-mode', 'user');
+  } else {
+    // ADMIN: full editor mode
+    body.classList.remove('user-mode');
+    const ca = document.getElementById('canvasArea');
+    if (ca) { ca.style.gridColumn = ''; ca.style.padding = ''; }
+  }
 }
 
 // ── CHANGE NOTIFICATION SYSTEM ──
